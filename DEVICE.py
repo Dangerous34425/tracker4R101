@@ -33,10 +33,11 @@ import androidhelper
 import time
 
 #Here goes your broker IP/Address and port, username, and password if appliable
-broker=
-broker_port=
-user=
-passwd=
+# (example: public test broker for quick setup)
+broker='test.mosquitto.org'
+broker_port=1883
+user=''
+passwd=''
 #Just a name to identify the runner, vehicle...
 mobile_id = '865037047472218'
 
@@ -50,7 +51,7 @@ point_id=0
 
 while True:
     droid.startLocating()
-    time.sleep(120) # For walking, running, etc 5-30 seconds should be appropiate
+    time.sleep(10) # reduced for near-real-time testing (battery impact)
     loc = droid.readLocation()[1]
     lat = 0
     lon = 0
@@ -71,8 +72,8 @@ while True:
     
         try:
             mqtt_client.connect(broker,broker_port)
-            #The topic for the data will be TRACK but use what you want; must match the TRACKER script topic
-            publish.single('YOUR TOPIC HERE',msg,qos=2,hostname=broker,port=broker_port,auth={'username':user,'password':passwd})
+            #The topic for the data will be TRACK (must match TRACKER.py)
+            publish.single('TRACK',msg,qos=2,hostname=broker,port=broker_port,auth={'username':user,'password':passwd})
             print 'DATA SENT->',source,msg
             mqtt_client.disconnect()
         except Exception as e:
