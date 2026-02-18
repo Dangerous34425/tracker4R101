@@ -71,6 +71,12 @@ If you want to track many runners/vehicles at the same time, in priciple it shou
 DEVICE.py script in each of the devices, ensuring they have properly set the mobile_id variable to something meaningful
 (of course, the mobile_id MUST be different to make sense) and then set layer style in QGIS to categorized, categorizing by joining mobile_id and last field.
 
+LocationTracker helper
+----------------------
+A small convenience class is available at `location_tracker.py` — it reads `tracking.csv`,
+returns the latest `LAST` location for a device, generates a small HTML map and can export
+history to CSV. See `examples/use_location_tracker.py` for usage.
+
 TODO:
 =====
 A lot, and for instance
