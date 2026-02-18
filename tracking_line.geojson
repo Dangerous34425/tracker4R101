@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "mobile_id": "865037047472218",
+        "point_count": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.5317342,
+          52.2263008
+        ]
+      }
+    }
+  ]
+}
