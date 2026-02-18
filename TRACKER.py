@@ -154,10 +154,11 @@ tracking_file.close()
 
 
 #Here goes your broker IP/Address and port, username, and password if appliable
-broker=
-broker_port=
-user=
-passwd=
+# Default: public test broker for quick real-time testing
+broker='test.mosquitto.org'
+broker_port=1883
+user=''
+passwd=''
 # Optional: set MOBILE_FILTER to an IMEI to accept only that device (None accepts all)
 # You can also set the env var MOBILE_FILTER to the IMEI you want to monitor.
 # Example: export MOBILE_FILTER=865037047472218
