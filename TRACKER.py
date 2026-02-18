@@ -42,7 +42,7 @@ def on_message(client, userdata, message):
     #  - semicolon: mobile_id;point_id;lat;lon
     try:
         payload = message.payload
-n    except Exception:
+    except Exception:
         payload = message.payload
 
     try:
@@ -50,7 +50,7 @@ n    except Exception:
     except Exception:
         payload_str = str(payload)
 
-    print "RECEIVED ->", payload_str
+    print("RECEIVED ->", payload_str)
 
     ide = None
     pid = None
@@ -66,29 +66,29 @@ n    except Exception:
             lat = str(data.get('lat') or data.get('latitude') or 0)
             lon = str(data.get('lon') or data.get('longitude') or 0)
         except Exception as e:
-            print "JSON parse error:", e
+            print("JSON parse error:", e)
             return
     else:
         # fallback to semicolon format
         try:
             ide, pid, lat, lon = payload_str.split(';')
         except Exception as e:
-            print "Payload parse error:", e
+            print("Payload parse error:", e)
             return
 
     if not ide:
-        print "Missing mobile identifier — ignoring message"
+        print("Missing mobile identifier — ignoring message")
         return
 
     # Optional per-device filter (None = accept all)
     mobile_filter = os.environ.get('MOBILE_FILTER', None)
     if mobile_filter and ide != mobile_filter:
-        print "Filtered out mobile_id", ide
+        print("Filtered out mobile_id", ide)
         return
 
     # ignore empty/zero coordinates
     if lat == '0' and lon == '0':
-        print "NOT LOGGED"
+        print("NOT LOGGED")
         return
 
     # read existing tracking file (robust to missing/short rows)
@@ -131,17 +131,17 @@ n    except Exception:
         writer = csv.writer(tracking_file, delimiter=';', quoting=csv.QUOTE_NONE)
         writer.writerows(normalized)
         tracking_file.close()
-        print 'LOGGED'
+        print('LOGGED')
     except Exception as e:
-        print 'Error writing tracking.csv:', e
+        print('Error writing tracking.csv:', e)
         return
 
     # regenerate GeoJSON so QGIS shows updated line/point (best-effort)
     try:
         subprocess.call(['python3', 'scripts/tracking_to_geojson.py'])
-        print 'GeoJSON regenerated'
+        print('GeoJSON regenerated')
     except Exception as e:
-        print 'GeoJSON regeneration failed:', e
+        print('GeoJSON regeneration failed:', e)
         
         
 
