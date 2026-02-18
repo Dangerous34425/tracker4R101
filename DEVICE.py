@@ -29,7 +29,12 @@
 
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
-import androidhelper
+try:
+    import androidhelper
+    HAS_ANDROID = True
+except Exception:
+    androidhelper = None
+    HAS_ANDROID = False
 import time
 
 #Here goes your broker IP/Address and port, username, and password if appliable
@@ -46,6 +51,10 @@ mqtt_client = mqtt.Client()
 mqtt_client.username_pw_set(user,passwd)
 mqtt_client.connect(broker,broker_port)
 #Android inicialization
+if not HAS_ANDROID:
+    print('androidhelper not available — run DEVICE.py on an Android device (QPython/Termux). Exiting.')
+    raise SystemExit(1)
+
 droid = androidhelper.Android()
 point_id=0
 
@@ -74,11 +83,11 @@ while True:
             mqtt_client.connect(broker,broker_port)
             #The topic for the data will be TRACK (must match TRACKER.py)
             publish.single('TRACK',msg,qos=2,hostname=broker,port=broker_port,auth={'username':user,'password':passwd})
-            print 'DATA SENT->',source,msg
+            print('DATA SENT->', source, msg)
             mqtt_client.disconnect()
         except Exception as e:
-            print e, "Error while connecting to MQTT broker"
+            print(e, 'Error while connecting to MQTT broker')
     else:
-        print "Location not available. Check your device settings"
+        print('Location not available. Check your device settings')
         
-droid.stopLocating()
+    droid.stopLocating()
