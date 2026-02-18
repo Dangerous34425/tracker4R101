@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracker — live viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+e2u1w1m0g3q6J8z6kR9m6z0Q1Qv9+0x3r2qFQm4Q=" crossorigin=""/>
+  <style>html,body,#map{height:100%;margin:0;padding:0}#info{position:absolute;right:8px;top:8px;z-index:4000;background:#fff;padding:8px;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2)}.last-point{color:red}</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="info">
+  <strong>Live tracker</strong><br/>
+  Auto-refresh: <span id="freq">3s</span><br/>
+  Filter mobile_id: <input id="filter" placeholder="865037047472218" style="width:160px"/>
+  <button id="centerBtn">Center on LAST</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-QV3Yf0v1r3Gf3g7Xr6nZQJ4s8Cqf5aZ2S0f1y3u4v6k=" crossorigin=""></script>
+<script>
+const map = L.map('map').setView([52.2259608, 16.5315942], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+let geoLayer = L.layerGroup().addTo(map);
+const REFRESH_MS = 3000;
+let lastFeatures = null;
+
+async function loadAndRender(){
+  try{
+    const res = await fetch('tracking_line.geojson?_='+Date.now());
+    if(!res.ok) throw new Error('fetch failed');
+    const geo = await res.json();
+    geoLayer.clearLayers();
+    lastFeatures = geo.features || [];
+
+    const filterVal = document.getElementById('filter').value.trim();
+
+    let lastMarkerBounds = null;
+
+    geo.features.forEach(f=>{
+      const id = f.properties && f.properties.mobile_id;
+      if(filterVal && id !== filterVal) return; // filter
+
+      if(f.geometry.type === 'LineString'){
+        const coords = f.geometry.coordinates.map(c=>[c[1], c[0]]);
+        const line = L.polyline(coords, {color: '#0077cc', weight:3, opacity:0.8}).addTo(geoLayer);
+        if(!filterVal) map.fitBounds(line.getBounds(), {padding:[40,40]});
+      } else if(f.geometry.type === 'Point'){
+        const [lon,lat] = f.geometry.coordinates;
+        const isLast = (f.properties && f.properties.point_count===1) || false;
+        const marker = L.circleMarker([lat,lon], {radius:8, fillColor:isLast? '#ff2d2d':'#2d7bff', color:'#000', weight:1, fillOpacity:0.9}).addTo(geoLayer);
+        marker.bindPopup('<b>'+id+'</b><br/>lat: '+lat+'<br/>lon: '+lon);
+        if(id && id === document.getElementById('filter').value.trim()){
+          marker.openPopup();
+          map.setView([lat,lon], 14);
+        }
+        lastMarkerBounds = [lat,lon];
+      }
+    });
+
+    document.title = 'Tracker — '+(filterVal || 'all')+' — '+(geo.features.length)+' layer(s)';
+  }catch(e){
+    console.error('viewer load failed', e);
+  }
+}
+
+// initial load
+loadAndRender();
+// periodic refresh
+setInterval(loadAndRender, REFRESH_MS);
+
+// center button: focus on LAST point for filtered mobile_id (or all)
+document.getElementById('centerBtn').addEventListener('click', ()=>{
+  const f = lastFeatures && lastFeatures.find(x=> (x.properties && x.properties.mobile_id===document.getElementById('filter').value.trim()) );
+  if(f){
+    if(f.geometry.type==='Point'){
+      const [lon,lat] = f.geometry.coordinates; map.setView([lat,lon],14);
+    } else if(f.geometry.type==='LineString'){
+      const coords = f.geometry.coordinates.map(c=>[c[1],c[0]]); map.fitBounds(coords);
+    }
+  }else{
+    // fallback: fit all
+    const groupBounds = geoLayer.getBounds(); if(groupBounds.isValid()) map.fitBounds(groupBounds);
+  }
+});
+</script>
+</body>
+</html>

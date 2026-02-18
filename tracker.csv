@@ -398,7 +398,7 @@ def my_form_open(dialog, layer, feature):
     </maplayer>
     <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="LineString" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
       <id>tracking_line20260218</id>
-      <datasource>file:./tracking_line.geojson?type=geojson&amp;spatialIndex=no&amp;subsetIndex=no</datasource>
+      <datasource>file:./tracking_line.geojson?type=geojson&amp;spatialIndex=no&amp;subsetIndex=no&amp;watchFile=yes</datasource>
       <shortname>tracking_line</shortname>
       <title></title>
       <abstract></abstract>
