@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracker — live MQTT viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>html,body,#map{height:100%;margin:0;padding:0}#info{position:absolute;right:8px;top:8px;z-index:4000;background:#fff;padding:8px;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2)}.last-point{color:red}</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="info">
+  <strong>MQTT Live</strong><br/>
+  Broker: <span id="broker">test.mosquitto.org:8080 (ws)</span><br/>
+  Topic: <span id="topic">TRACK</span><br/>
+  Filter mobile_id: <input id="filter" placeholder="865037047472218" style="width:160px"/>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+const map = L.map('map').setView([52.2263, 16.53173], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+
+const client = mqtt.connect('ws://test.mosquitto.org:8080/mqtt');
+const topic = 'TRACK';
+const devices = {}; // mobile_id -> {marker, polyline, coords[]}
+
+client.on('connect', ()=>{
+  console.log('MQTT connected');
+  client.subscribe(topic);
+});
+client.on('error', err=>console.error('MQTT error', err));
+
+function ensureDevice(id){
+  if(!devices[id]){
+    const layer = { coords: [], marker: null, polyline: L.polyline([], {color:'#0077cc', weight:3}).addTo(map)};
+    devices[id] = layer;
+  }
+  return devices[id];
+}
+
+client.on('message', (t, payload)=>{
+  if(t !== topic) return;
+  let msg;
+  try{ msg = JSON.parse(payload.toString()); } catch(e){
+    // fallback to semicolon-format
+    const s = payload.toString();
+    const parts = s.split(';');
+    msg = {tid: parts[0], tst: parts[1], lat: parseFloat(parts[2]), lon: parseFloat(parts[3])};
+  }
+  const id = msg.tid || msg.mobile_id;
+  if(!id) return;
+  const lat = parseFloat(msg.lat || msg.latitude);
+  const lon = parseFloat(msg.lon || msg.longitude);
+  if(Number.isNaN(lat) || Number.isNaN(lon)) return;
+
+  const filter = document.getElementById('filter').value.trim();
+  if(filter && filter !== id) return;
+
+  const dev = ensureDevice(id);
+  dev.coords.push([lat, lon]);
+  dev.polyline.setLatLngs(dev.coords);
+
+  if(dev.marker) dev.marker.setLatLng([lat, lon]);
+  else {
+    dev.marker = L.circleMarker([lat, lon], {radius:8, fillColor:'#ff2d2d', color:'#000', weight:1, fillOpacity:0.9}).addTo(map);
+    dev.marker.bindPopup(`<b>${id}</b><br/>lat:${lat}<br/>lon:${lon}`);
+  }
+  dev.marker.openPopup();
+  map.setView([lat, lon], 16);
+});
+
+</script>
+</body>
+</html>
