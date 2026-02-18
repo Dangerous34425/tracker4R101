@@ -38,7 +38,7 @@ broker_port=
 user=
 passwd=
 #Just a name to identify the runner, vehicle...
-mobile_id = 
+mobile_id = '865037047472218'
 
 # MQTT inicialzation
 mqtt_client = mqtt.Client()
